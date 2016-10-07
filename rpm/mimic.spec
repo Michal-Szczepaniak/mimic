@@ -28,5 +28,5 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %files
-/usr
+/usr/bin/mimic
 %defattr(-,root,root,-)
