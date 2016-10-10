@@ -14,12 +14,12 @@ BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 
 %build
+./configure
 make %{?_smp_mflags}
 
 
 %install
 rm -rf $RPM_BUILD_ROOT
-./configure
 make install DESTDIR=$RPM_BUILD_ROOT
 rm -rf /usr/lib/debug/
 
