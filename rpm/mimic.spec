@@ -19,7 +19,7 @@ make %{?_smp_mflags}
 
 %install
 rm -rf $RPM_BUILD_ROOT
-./configure --prefix=$RPM_BUILD_ROOT/usr 
+./configure
 make install DESTDIR=$RPM_BUILD_ROOT
 rm -rf /usr/lib/debug/
 
