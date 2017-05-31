@@ -42,7 +42,7 @@ SRCS = mimic_main.c mimic_time_main.c t2p_main.c compile_regexes.c \
        mimicvox_info_main.c
 OBJS = $(SRCS:.c=.o) mimic_voice_list.o 
 FILES = Makefile $(SRCS)
-LOCAL_INCLUDES = 
+LOCAL_INCLUDES = \
 
 ALL = shared_libs \
       $(BINDIR)/mimic$(EXEEXT) \
@@ -57,6 +57,7 @@ mimic_LIBS = $(VOICELIBS) $(LANGS:%=mimic_%) $(LEXES:%=mimic_%) mimic
 
 mimic_LIBS_flags = -L$(LIBDIR) $(mimic_LIBS:%=-l%)
 mimic_LIBS_deps = $(mimic_LIBS:%=$(LIBDIR)/lib%.a)
+
 
 include $(TOP)/config/common_make_rules
 
@@ -78,7 +79,7 @@ LOCAL_CLEAN = $(BINDIR)/mimic$(EXEEXT) $(BINDIR)/mimic_time$(EXEEXT) \
               mimic_voice_list.c
 
 ifdef SHFLAGS
-mimic_LIBS_flags += -Wl,-rpath $(LIBDIR) 
+mimic_LIBS_flags += -Wl,-rpath $(LIBDIR)
 shared_libs: $(SHAREDLIBS)
 else
 shared_libs: nothing

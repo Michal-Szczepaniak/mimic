@@ -42,6 +42,7 @@
 #include <string.h>
 #include <sys/time.h>
 #include <unistd.h>
+#include <czmq.h>
 #ifdef UNDER_WINDOWS
 #include <windows.h>
 #else
@@ -205,8 +206,7 @@ static void ef_set(cst_features *f, const char *fv, const char *type)
     }
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
     struct timeval tv;
     cst_voice *v;
     const char *filename;
@@ -232,7 +232,7 @@ int main(int argc, char **argv)
     signal(SIGINT, sigint_handler);
 #endif //UNDER_WINDOWS
     filename = 0;
-    outtype = "play";           /* default is to play */
+    outtype = "play";
     mimic_verbose = FALSE;
     mimic_loop = FALSE;
     mimic_bench = FALSE;
@@ -240,208 +240,38 @@ int main(int argc, char **argv)
     ssml_mode = FALSE;
     extra_feats = new_features();
 
-    mimic_init();
-    mimic_set_lang_list();      /* defined at compilation time */
+	mimic_init();
+	//mimic_set_lang_list();
 
-    for (i = 1; i < argc; i++)
-    {
-        if (cst_streq(argv[i], "--version"))
-        {
-            mimic_version();
-            return 1;
-        }
-        else if (cst_streq(argv[i], "-h") || cst_streq(argv[i], "--help")
-                 || cst_streq(argv[i], "-?"))
-            mimic_usage();
-        else if (cst_streq(argv[i], "-v"))
-            mimic_verbose = TRUE;
-        else if (cst_streq(argv[i], "-lv"))
-        {
-            if (mimic_voice_list == NULL)
-                mimic_set_voice_list(voicedir);
-            mimic_voice_list_print();
-            exit(0);
-        }
-        else if (cst_streq(argv[i], "-l"))
-            mimic_loop = TRUE;
-        else if (cst_streq(argv[i], "-b"))
-        {
-            mimic_bench = TRUE;
-            break;              /* ignore other arguments */
-        }
-        else if ((cst_streq(argv[i], "-o")) && (i + 1 < argc))
-        {
-            outtype = argv[i + 1];
-            i++;
-        }
-        else if ((cst_streq(argv[i], "-voice")) && (i + 1 < argc))
-        {
-            if (mimic_voice_list == NULL)
-                mimic_set_voice_list(voicedir);
-            desired_voice = mimic_voice_select(argv[i + 1]);
-            i++;
-        }
-        else if ((cst_streq(argv[i], "-voicedir")) && (i + 1 < argc))
-        {
-            voicedir = argv[i + 1];
-            if (mimic_voice_list == NULL)
-                mimic_set_voice_list(voicedir);
-            i++;
-        }
-        else if ((cst_streq(argv[i], "-add_lex")) && (i + 1 < argc))
-        {
-            lex_addenda_file = argv[i + 1];
-            i++;
-        }
-        else if (cst_streq(argv[i], "-f") && (i + 1 < argc))
-        {
-            filename = argv[i + 1];
-            explicit_filename = TRUE;
-            i++;
-        }
-        else if (cst_streq(argv[i], "-pw"))
-        {
-            feat_set_string(extra_feats, "print_info_relation", "Word");
-            feat_set(extra_feats, "post_synth_hook_func",
-                     uttfunc_val(&print_info));
-        }
-        else if (cst_streq(argv[i], "-ps"))
-        {
-            feat_set_string(extra_feats, "print_info_relation", "Segment");
-            feat_set(extra_feats, "post_synth_hook_func",
-                     uttfunc_val(&print_info));
-        }
-        else if (cst_streq(argv[i], "-psdur"))
-        {
-            // Added by AUP Mar 2013 for extracting durations (end-time) of segments
-            // (useful in talking heads, etc.)
-            feat_set_string(extra_feats, "print_info_relation",
-                            "SegmentEndTime");
-            feat_set(extra_feats, "post_synth_hook_func",
-                     uttfunc_val(&print_info));
-        }
-        else if (cst_streq(argv[i], "-ssml"))
-        {
-            ssml_mode = TRUE;
-        }
-        else if (cst_streq(argv[i], "-pr") && (i + 1 < argc))
-        {
-            feat_set_string(extra_feats, "print_info_relation", argv[i + 1]);
-            feat_set(extra_feats, "post_synth_hook_func",
-                     uttfunc_val(&print_info));
-            i++;
-        }
-        else if (cst_streq(argv[i], "-voicedump") && (i + 1 < argc))
-        {
-            voicedumpfile = argv[i + 1];
-            i++;
-        }
-        else if ((cst_streq(argv[i], "-set") || cst_streq(argv[i], "-s"))
-                 && (i + 1 < argc))
-        {
-            ef_set(extra_feats, argv[i + 1], 0);
-            i++;
-        }
-        else if (cst_streq(argv[i], "--seti") && (i + 1 < argc))
-        {
-            ef_set(extra_feats, argv[i + 1], "int");
-            i++;
-        }
-        else if (cst_streq(argv[i], "--setf") && (i + 1 < argc))
-        {
-            ef_set(extra_feats, argv[i + 1], "float");
-            i++;
-        }
-        else if (cst_streq(argv[i], "--sets") && (i + 1 < argc))
-        {
-            ef_set(extra_feats, argv[i + 1], "string");
-            i++;
-        }
-        else if (cst_streq(argv[i], "-p") && (i + 1 < argc))
-        {
-            filename = argv[i + 1];
-            explicit_phones = TRUE;
-            i++;
-        }
-        else if (cst_streq(argv[i], "-t") && (i + 1 < argc))
-        {
-            filename = argv[i + 1];
-            explicit_text = TRUE;
-            i++;
-        }
-        else if (filename)
-            outtype = argv[i];
-        else
-            filename = argv[i];
-    }
-
-    if (filename == NULL)
-        filename = "-";         /* stdin */
     if (mimic_voice_list == NULL)
         mimic_set_voice_list(voicedir);
-    if (desired_voice == 0)
-        desired_voice = mimic_voice_select(NULL);
-
+    desired_voice = mimic_voice_select("slt");
+    explicit_text = TRUE;
     v = desired_voice;
     feat_copy_into(extra_feats, v->features);
-    durs = 0.0;
 
-    if (voicedumpfile != NULL)
-    {
-        mimic_voice_dump(v, voicedumpfile);
-        exit(0);
+    //  Create and connect client socket
+    zsock_t *client = zsock_new (ZMQ_PULL);
+	zsock_set_plain_username (client, "admin");
+	zsock_set_plain_password (client, "secret");
+    zsock_connect (client, "tcp://127.0.0.1:43201");
+
+	char *message = NULL;
+    for(;;) {
+    	message = zstr_recv (client);
+
+		if(strcmp(message, "end") == 0) {
+		    mimic_text_to_speech("Good bye!", v, outtype);
+			break;
+		} else {
+		    mimic_text_to_speech(message, v, outtype);
+		}
+
+
     }
+    free (message);
 
-    if (lex_addenda_file)
-        mimic_voice_add_lex_addenda(v, lex_addenda_file);
-
-    if (cst_streq("stream", outtype))
-    {
-        asi = new_audio_streaming_info();
-        asi->asc = audio_stream_chunk;
-        feat_set(v->features, "streaming_info",
-                 audio_streaming_info_val(asi));
-    }
-
-    if (mimic_bench)
-    {
-        outtype = "none";
-        filename =
-            "A whole joy was reaping, but they've gone south, you should fetch azure mike.";
-        explicit_text = TRUE;
-    }
-
-  loop:
-    gettimeofday(&tv, NULL);
-    time_start = (double) (tv.tv_sec) + (((double) tv.tv_usec) / 1000000.0);
-
-    if (explicit_phones)
-        durs = mimic_phones_to_speech(filename, v, outtype);
-    else if ((strchr(filename, ' ') && !explicit_filename) || explicit_text)
-    {
-        if (ssml_mode)
-            durs = mimic_ssml_text_to_speech(filename, v, outtype);
-        else
-            durs = mimic_text_to_speech(filename, v, outtype);
-    }
-    else
-    {
-        if (ssml_mode)
-            durs = mimic_ssml_file_to_speech(filename, v, outtype);
-        else
-            durs = mimic_file_to_speech(filename, v, outtype);
-    }
-
-    gettimeofday(&tv, NULL);
-    time_end = ((double) (tv.tv_sec)) + ((double) tv.tv_usec / 1000000.0);
-
-    if (mimic_verbose || (mimic_bench && bench_iter == ITER_MAX))
-        printf("times faster than real-time: %f\n(%f seconds of speech synthesized in %f)\n",
-             durs / (float) (time_end - time_start), durs,
-             (float) (time_end - time_start));
-
-    if (mimic_loop || (mimic_bench && bench_iter++ < ITER_MAX))
-        goto loop;
+    zsock_destroy (&client);
 
     delete_features(extra_feats);
     delete_val(mimic_voice_list);
@@ -449,5 +279,252 @@ int main(int argc, char **argv)
     /*    cst_alloc_debug_summary(); */
 
     mimic_exit();
-    return 0;
+	return 0;
 }
+
+//int main(int argc, char **argv)
+//{
+//    struct timeval tv;
+//    cst_voice *v;
+//    const char *filename;
+//    const char *outtype;
+//    cst_voice *desired_voice = 0;
+//    const char *voicedir = NULL;
+//    int i;
+//    float durs;
+//    double time_start, time_end;
+//    int mimic_verbose, mimic_loop, mimic_bench;
+//    int explicit_filename, explicit_text, explicit_phones, ssml_mode;
+//#define ITER_MAX 3
+//    int bench_iter = 0;
+//    cst_features *extra_feats;
+//    const char *lex_addenda_file = NULL;
+//    const char *voicedumpfile = NULL;
+//    cst_audio_streaming_info *asi;
+//
+//    // Set signal handler to shutdown any playing audio on SIGINT
+//#ifdef UNDER_WINDOWS
+//    SetConsoleCtrlHandler(windows_signal_handler, TRUE);
+//#else
+//    signal(SIGINT, sigint_handler);
+//#endif //UNDER_WINDOWS
+//    filename = 0;
+//    outtype = "play";            //default is to play
+//    mimic_verbose = FALSE;
+//    mimic_loop = FALSE;
+//    mimic_bench = FALSE;
+//    explicit_text = explicit_filename = explicit_phones = FALSE;
+//    ssml_mode = FALSE;
+//    extra_feats = new_features();
+//
+//    mimic_init();
+//    mimic_set_lang_list();       //defined at compilation time
+//
+//    for (i = 1; i < argc; i++)
+//    {
+//        if (cst_streq(argv[i], "--version"))
+//        {
+//            mimic_version();
+//            return 1;
+//        }
+//        else if (cst_streq(argv[i], "-h") || cst_streq(argv[i], "--help")
+//                 || cst_streq(argv[i], "-?"))
+//            mimic_usage();
+//        else if (cst_streq(argv[i], "-v"))
+//            mimic_verbose = TRUE;
+//        else if (cst_streq(argv[i], "-lv"))
+//        {
+//            if (mimic_voice_list == NULL)
+//                mimic_set_voice_list(voicedir);
+//            mimic_voice_list_print();
+//            exit(0);
+//        }
+//        else if (cst_streq(argv[i], "-l"))
+//            mimic_loop = TRUE;
+//        else if (cst_streq(argv[i], "-b"))
+//        {
+//            mimic_bench = TRUE;
+//            break;               //ignore other arguments
+//        }
+//        else if ((cst_streq(argv[i], "-o")) && (i + 1 < argc))
+//        {
+//            outtype = argv[i + 1];
+//            i++;
+//        }
+//        else if ((cst_streq(argv[i], "-voice")) && (i + 1 < argc))
+//        {
+//            if (mimic_voice_list == NULL)
+//                mimic_set_voice_list(voicedir);
+//            desired_voice = mimic_voice_select(argv[i + 1]);
+//            i++;
+//        }
+//        else if ((cst_streq(argv[i], "-voicedir")) && (i + 1 < argc))
+//        {
+//            voicedir = argv[i + 1];
+//            if (mimic_voice_list == NULL)
+//                mimic_set_voice_list(voicedir);
+//            i++;
+//        }
+//        else if ((cst_streq(argv[i], "-add_lex")) && (i + 1 < argc))
+//        {
+//            lex_addenda_file = argv[i + 1];
+//            i++;
+//        }
+//        else if (cst_streq(argv[i], "-f") && (i + 1 < argc))
+//        {
+//            filename = argv[i + 1];
+//            explicit_filename = TRUE;
+//            i++;
+//        }
+//        else if (cst_streq(argv[i], "-pw"))
+//        {
+//            feat_set_string(extra_feats, "print_info_relation", "Word");
+//            feat_set(extra_feats, "post_synth_hook_func",
+//                     uttfunc_val(&print_info));
+//        }
+//        else if (cst_streq(argv[i], "-ps"))
+//        {
+//            feat_set_string(extra_feats, "print_info_relation", "Segment");
+//            feat_set(extra_feats, "post_synth_hook_func",
+//                     uttfunc_val(&print_info));
+//        }
+//        else if (cst_streq(argv[i], "-psdur"))
+//        {
+//            // Added by AUP Mar 2013 for extracting durations (end-time) of segments
+//            // (useful in talking heads, etc.)
+//            feat_set_string(extra_feats, "print_info_relation",
+//                            "SegmentEndTime");
+//            feat_set(extra_feats, "post_synth_hook_func",
+//                     uttfunc_val(&print_info));
+//        }
+//        else if (cst_streq(argv[i], "-ssml"))
+//        {
+//            ssml_mode = TRUE;
+//        }
+//        else if (cst_streq(argv[i], "-pr") && (i + 1 < argc))
+//        {
+//            feat_set_string(extra_feats, "print_info_relation", argv[i + 1]);
+//            feat_set(extra_feats, "post_synth_hook_func",
+//                     uttfunc_val(&print_info));
+//            i++;
+//        }
+//        else if (cst_streq(argv[i], "-voicedump") && (i + 1 < argc))
+//        {
+//            voicedumpfile = argv[i + 1];
+//            i++;
+//        }
+//        else if ((cst_streq(argv[i], "-set") || cst_streq(argv[i], "-s"))
+//                 && (i + 1 < argc))
+//        {
+//            ef_set(extra_feats, argv[i + 1], 0);
+//            i++;
+//        }
+//        else if (cst_streq(argv[i], "--seti") && (i + 1 < argc))
+//        {
+//            ef_set(extra_feats, argv[i + 1], "int");
+//            i++;
+//        }
+//        else if (cst_streq(argv[i], "--setf") && (i + 1 < argc))
+//        {
+//            ef_set(extra_feats, argv[i + 1], "float");
+//            i++;
+//        }
+//        else if (cst_streq(argv[i], "--sets") && (i + 1 < argc))
+//        {
+//            ef_set(extra_feats, argv[i + 1], "string");
+//            i++;
+//        }
+//        else if (cst_streq(argv[i], "-p") && (i + 1 < argc))
+//        {
+//            filename = argv[i + 1];
+//            explicit_phones = TRUE;
+//            i++;
+//        }
+//        else if (cst_streq(argv[i], "-t") && (i + 1 < argc))
+//        {
+//            filename = argv[i + 1];
+//            explicit_text = TRUE;
+//            i++;
+//        }
+//        else if (filename)
+//            outtype = argv[i];
+//        else
+//            filename = argv[i];
+//    }
+//
+//    if (filename == NULL)
+//        filename = "-";          //stdin
+//    if (mimic_voice_list == NULL)
+//        mimic_set_voice_list(voicedir);
+//    if (desired_voice == 0)
+//        desired_voice = mimic_voice_select(NULL);
+//
+//    v = desired_voice;
+//    feat_copy_into(extra_feats, v->features);
+//    durs = 0.0;
+//
+//    if (voicedumpfile != NULL)
+//    {
+//        mimic_voice_dump(v, voicedumpfile);
+//        exit(0);
+//    }
+//
+//    if (lex_addenda_file)
+//        mimic_voice_add_lex_addenda(v, lex_addenda_file);
+//
+//    if (cst_streq("stream", outtype))
+//    {
+//        asi = new_audio_streaming_info();
+//        asi->asc = audio_stream_chunk;
+//        feat_set(v->features, "streaming_info",
+//                 audio_streaming_info_val(asi));
+//    }
+//
+//    if (mimic_bench)
+//    {
+//        outtype = "none";
+//        filename =
+//            "A whole joy was reaping, but they've gone south, you should fetch azure mike.";
+//        explicit_text = TRUE;
+//    }
+//
+//  loop:
+//    gettimeofday(&tv, NULL);
+//    time_start = (double) (tv.tv_sec) + (((double) tv.tv_usec) / 1000000.0);
+//
+//    if (explicit_phones)
+//        durs = mimic_phones_to_speech(filename, v, outtype);
+//    else if ((strchr(filename, ' ') && !explicit_filename) || explicit_text)
+//    {
+//        if (ssml_mode)
+//            durs = mimic_ssml_text_to_speech(filename, v, outtype);
+//        else
+//            durs = mimic_text_to_speech(filename, v, outtype);
+//    }
+//    else
+//    {
+//        if (ssml_mode)
+//            durs = mimic_ssml_file_to_speech(filename, v, outtype);
+//        else
+//            durs = mimic_file_to_speech(filename, v, outtype);
+//    }
+//
+//    gettimeofday(&tv, NULL);
+//    time_end = ((double) (tv.tv_sec)) + ((double) tv.tv_usec / 1000000.0);
+//
+//    if (mimic_verbose || (mimic_bench && bench_iter == ITER_MAX))
+//        printf("times faster than real-time: %f\n(%f seconds of speech synthesized in %f)\n",
+//             durs / (float) (time_end - time_start), durs,
+//             (float) (time_end - time_start));
+//
+//    if (mimic_loop || (mimic_bench && bench_iter++ < ITER_MAX))
+//        goto loop;
+//
+//    delete_features(extra_feats);
+//    delete_val(mimic_voice_list);
+//    mimic_voice_list = 0;
+//    /*    cst_alloc_debug_summary(); */
+//
+//    mimic_exit();
+//    return 0;
+//}
