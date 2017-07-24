@@ -31,4 +31,5 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %files
+/usr
 %defattr(-,root,root,-)
