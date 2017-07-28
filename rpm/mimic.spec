@@ -7,7 +7,7 @@ Source0:        %{name}-%{version}.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires:  python
 BuildRequires:  alsa-lib-devel
-%define _unpackaged_files_terminate_build 1
+%define _unpackaged_files_terminate_build 0
 
 %description
 
