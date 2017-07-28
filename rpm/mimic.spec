@@ -5,7 +5,10 @@ Release:        1
 License:        BSD
 Source0:        %{name}-%{version}.tar.gz 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
+Requires:       libportaudio2
 BuildRequires:  python
+BuildRequires:  portaudio-devel
+BuildRequires:  alsa-lib-devel
 %define _unpackaged_files_terminate_build 1
 
 %description
